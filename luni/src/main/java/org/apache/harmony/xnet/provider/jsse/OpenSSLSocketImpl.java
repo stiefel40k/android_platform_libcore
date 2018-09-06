@@ -616,7 +616,9 @@ public class OpenSSLSocketImpl
         checkOpen();
         synchronized (this) {
             if (is == null) {
-                is = new SSLInputStream();
+              // begint WITH_TAINT_TRACKING_GABOR
+              is = new SSLInputStream(this.hostname);
+              // end WITH_TAINT_TRACKING_GABOR
             }
 
             return is;
@@ -640,44 +642,199 @@ public class OpenSSLSocketImpl
      * read data received via SSL protocol.
      */
     private class SSLInputStream extends InputStream {
-        SSLInputStream() throws IOException {
-            /*
-             * Note: When startHandshake() throws an exception, no
-             * SSLInputStream object will be created.
-             */
-            OpenSSLSocketImpl.this.startHandshake();
-        }
+      // begint WITH_TAINT_TRACKING_GABOR
+      private String hname;
+      // TAINT_SSLINPUT_FILTER
+      private String[] f = {
+        "graph.facebook.com",
+        "sdk.hockeyapp.net",
+        "decide.mixpanel.com",
+        "api.mixpanel.com"
+      }; 
+      // end WITH_TAINT_TRACKING_GABOR
 
-        /**
-         * Reads one byte. If there is no data in the underlying buffer,
-         * this operation can block until the data will be
-         * available.
-         * @return read value.
-         * @throws <code>IOException</code>
+      SSLInputStream() throws IOException {
+        /*
+         * Note: When startHandshake() throws an exception, no
+         * SSLInputStream object will be created.
          */
-        @Override
-        public int read() throws IOException {
-            return Streams.readSingleByte(this);
-        }
+        OpenSSLSocketImpl.this.startHandshake();
+      }
 
-        /**
-         * Method acts as described in spec for superclass.
-         * @see java.io.InputStream#read(byte[],int,int)
+      // begint WITH_TAINT_TRACKING_GABOR
+      SSLInputStream(String hname) throws IOException {
+        this.hname = hname;
+        /*
+         * Note: When startHandshake() throws an exception, no
+         * SSLInputStream object will be created.
          */
-        @Override
-        public int read(byte[] buf, int offset, int byteCount) throws IOException {
-            BlockGuard.getThreadPolicy().onNetwork();
-            synchronized (readLock) {
-                checkOpen();
-                Arrays.checkOffsetAndCount(buf.length, offset, byteCount);
-                if (byteCount == 0) {
-                    return 0;
-                }
-                return NativeCrypto.SSL_read(sslNativePointer, socket.getFileDescriptor$(),
-                        OpenSSLSocketImpl.this, buf, offset, byteCount, getSoTimeout());
+        OpenSSLSocketImpl.this.startHandshake();
+      }
+      // end WITH_TAINT_TRACKING_GABOR
+
+      public void setHname(String hname) {
+        this.hname = hname;
+      }
+
+      /**
+       * Reads one byte. If there is no data in the underlying buffer,
+       * this operation can block until the data will be
+       * available.
+       * @return read value.
+       * @throws <code>IOException</code>
+       */
+      @Override
+      public int read() throws IOException {
+        // begint WITH_TAINT_TRACKING_GABOR
+        //return Streams.readSingleByte(this);
+        int byteRead = Streams.readSingleByte(this);
+        FileDescriptor fd = socket.getFileDescriptor$();
+        if (hname == null) {
+          hname = "unknown";
+        }
+        ArrayList<String> filter = new ArrayList<String>(Arrays.asList(f));
+        if (!filter.contains(hname)) {
+          int tag = Taint.TAINT_SSLINPUT;
+          byteRead = Taint.addTaintInt(byteRead, tag);
+          //String dstr = String.valueOf(byteRead);
+          String dstr = String.valueOf(Character.toChars(byteRead));
+          // We only display at most Taint.dataBytesToLog characters in logcat of data
+          if (dstr.length() > Taint.dataBytesToLog) {
+            dstr = dstr.substring(0, Taint.dataBytesToLog);                                                              
+          }
+          // replace non-printable characters
+          dstr = dstr.replaceAll("\\p{C}", ".");
+          String addr = (fd.hasName) ? fd.name : "unknown";
+          String tstr = "0x" + Integer.toHexString(tag);
+          Taint.log("Tainted data=[" + dstr +"] with tag " + tstr + " from SSLInputStream.read(" + addr + ") (hostname: " + hname + ")");
+        }
+        return byteRead;  
+        // end WITH_TAINT_TRACKING_GABOR
+      }
+
+      /**
+       * Method acts as described in spec for superclass.
+       * @see java.io.InputStream#read(byte[],int,int)
+       */
+      @Override
+      public int read(byte[] buf, int offset, int byteCount) throws IOException {
+        BlockGuard.getThreadPolicy().onNetwork();
+        synchronized (readLock) {
+          checkOpen();
+          Arrays.checkOffsetAndCount(buf.length, offset, byteCount);
+          if (byteCount == 0) {
+            return 0;
+          }
+          // begin WITH_TAINT_TRACKING_GABOR
+          int tag = Taint.TAINT_SSLINPUT;
+          Taint.addTaintByteArray(buf, tag);
+          FileDescriptor fd = socket.getFileDescriptor$();
+          if (hname == null) {
+            hname = "unknown";
+          }
+          ArrayList<String> filter = new ArrayList<String>(Arrays.asList(f));
+          if (!filter.contains(hname)) {
+            int disLen = byteCount;
+            if (byteCount > Taint.dataBytesToLog) {
+              disLen = Taint.dataBytesToLog;
             }
+            // We only display at most Taint.dataBytesToLog characters in logcat
+            String dstr = new String(buf, offset, disLen);
+            // replace non-printable characters
+            dstr = dstr.replaceAll("\\p{C}", ".");
+            String addr = (fd.hasName) ? fd.name : "unknown";
+            //String hname = "unknown";
+            //String hname = (OpenSSLSocketImpl.this.getMyHostName() != null) ? OpenSSLSocketImpl.this.getMyHostName() : "unknown";
+            //String hname = (((OpenSSLSocketImpl) socket).getPeerHostName() != null) ? ((OpenSSLSocketImpl) socket).getPeerHostName() : "unknown";
+            String tstr = "0x" + Integer.toHexString(tag);
+            Taint.log("Tainted data=[" + dstr +"] with tag " + tstr + " from SSLInputStream.read(" + addr + ") (hostname: " + hname + ")");
+            //      Taint.log("SSLInputStream.read(" + addr + ") received data with tag " + tstr + " data=[" + dstr + "]");
+          }
+          // end WITH_TAINT_TRACKING_GABOR
+          return NativeCrypto.SSL_read(sslNativePointer, socket.getFileDescriptor$(),
+              OpenSSLSocketImpl.this, buf, offset, byteCount, getSoTimeout());
         }
+      }
     }
+//    /**
+//     * This inner class provides input data stream functionality
+//     * for the OpenSSL native implementation. It is used to
+//     * read data received via SSL protocol.
+//     */
+//    private class SSLInputStream extends InputStream {
+//        SSLInputStream() throws IOException {
+//            /*
+//             * Note: When startHandshake() throws an exception, no
+//             * SSLInputStream object will be created.
+//             */
+//            OpenSSLSocketImpl.this.startHandshake();
+//        }
+//
+//        /**
+//         * Reads one byte. If there is no data in the underlying buffer,
+//         * this operation can block until the data will be
+//         * available.
+//         * @return read value.
+//         * @throws <code>IOException</code>
+//         */
+//        @Override
+//        public int read() throws IOException {
+//          // begint WITH_TAINT_TRACKING_GABOR
+//          //return Streams.readSingleByte(this);
+//          int byteRead = Streams.readSingleByte(this);
+//          int tag = Taint.getTaintInt(byteRead);
+//          FileDescriptor fd = socket.getFileDescriptor$();
+//          if (tag != Taint.TAINT_CLEAR) {
+//            String dstr = String.valueOf(byteRead);
+//            // We only display at most Taint.dataBytesToLog characters in logcat of data
+//            if (dstr.length() > Taint.dataBytesToLog) {
+//              dstr = dstr.substring(0, Taint.dataBytesToLog);                                                              
+//            }
+//            // replace non-printable characters
+//            dstr = dstr.replaceAll("\\p{C}", ".");
+//            String addr = (fd.hasName) ? fd.name : "unknown";
+//            String tstr = "0x" + Integer.toHexString(tag);
+//            Taint.log("SSLInputStream.read(" + addr + ") received data with tag " + tstr + " data=[" + dstr + "]");
+//          }
+//          return byteRead;  
+//          // end WITH_TAINT_TRACKING_GABOR
+//        }
+//
+//        /**
+//         * Method acts as described in spec for superclass.
+//         * @see java.io.InputStream#read(byte[],int,int)
+//         */
+//        @Override
+//        public int read(byte[] buf, int offset, int byteCount) throws IOException {
+//          BlockGuard.getThreadPolicy().onNetwork();
+//          synchronized (readLock) {
+//            checkOpen();
+//            Arrays.checkOffsetAndCount(buf.length, offset, byteCount);
+//            if (byteCount == 0) {
+//              return 0;
+//            }
+//            // begin WITH_TAINT_TRACKING_GABOR
+//            int tag = Taint.getTaintByteArray(buf);
+//            FileDescriptor fd = socket.getFileDescriptor$();
+//            if (tag != Taint.TAINT_CLEAR) {
+//              int disLen = byteCount;
+//              if (byteCount > Taint.dataBytesToLog) {
+//                disLen = Taint.dataBytesToLog;
+//              }
+//              // We only display at most Taint.dataBytesToLog characters in logcat
+//              String dstr = new String(buf, offset, disLen);
+//              // replace non-printable characters
+//              dstr = dstr.replaceAll("\\p{C}", ".");
+//              String addr = (fd.hasName) ? fd.name : "unknown";
+//              String tstr = "0x" + Integer.toHexString(tag);
+//              Taint.log("SSLInputStream.read(" + addr + ") received data with tag " + tstr + " data=[" + dstr + "]");
+//            }
+//            // end WITH_TAINT_TRACKING_GABOR
+//            return NativeCrypto.SSL_read(sslNativePointer, socket.getFileDescriptor$(),
+//                OpenSSLSocketImpl.this, buf, offset, byteCount, getSoTimeout());
+//          }
+//        }
+//    }
 
     /**
      * This inner class provides output data stream functionality
@@ -842,6 +999,9 @@ public class OpenSSLSocketImpl
      */
     public void setHostname(String hostname) {
         this.hostname = hostname;
+        //if (is != null) {
+        //  ((SSLInputStream) is).setHname(hostname);
+        //}
     }
 
     /**
