@@ -86,6 +86,11 @@ LOCAL_STATIC_LIBRARIES += $(core_static_libraries)
 LOCAL_MODULE_TAGS := optional
 LOCAL_MODULE := libjavacore
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_PATH)/NativeCode.mk
+# turn on taint tracking
+ifeq ($(WITH_TAINT_TRACKING),true)
+	LOCAL_CFLAGS += -DWITH_TAINT_TRACKING
+endif
+
 include external/stlport/libstlport.mk
 include $(BUILD_SHARED_LIBRARY)
 

@@ -295,6 +295,10 @@ ifeq ($(WITH_HOST_DALVIK),true)
     endif
 endif
 
+# turn on taint tracking
+ifeq ($(WITH_TAINT_TRACKING),true)
+    LOCAL_CFLAGS += -DWITH_TAINT_TRACKING
+endif
 #
 # Local droiddoc for faster libcore testing
 #

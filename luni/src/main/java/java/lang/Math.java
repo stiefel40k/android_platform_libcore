@@ -54,9 +54,16 @@ public final class Math {
      * <li>{@code abs(NaN) = NaN}</li>
      * </ul>
      */
+// begin WITH_TAINT_TRACKING
+    //public static double abs(double d) {
+    //    return Double.longBitsToDouble(Double.doubleToRawLongBits(d) & 0x7fffffffffffffffL);
+    //}
+    public static native double abs_intrinsic(double d);
+    
     public static double abs(double d) {
-        return Double.longBitsToDouble(Double.doubleToRawLongBits(d) & 0x7fffffffffffffffL);
+        return abs_intrinsic(d);
     }
+// end WITH_TAINT_TRACKING
 
     /**
      * Returns the absolute value of the argument.
@@ -69,9 +76,16 @@ public final class Math {
      * <li>{@code abs(NaN) = NaN}</li>
      * </ul>
      */
+// begin WITH_TAINT_TRACKING
+    //public static float abs(float f) {
+    //    return Float.intBitsToFloat(Float.floatToRawIntBits(f) & 0x7fffffff);
+    //}
+    public static native float abs_intrinsic(float f);
+    
     public static float abs(float f) {
-        return Float.intBitsToFloat(Float.floatToRawIntBits(f) & 0x7fffffff);
+        return abs_intrinsic(f);
     }
+// end WITH_TAINT_TRACKING
 
     /**
      * Returns the absolute value of the argument.
@@ -79,17 +93,31 @@ public final class Math {
      * If the argument is {@code Integer.MIN_VALUE}, {@code Integer.MIN_VALUE}
      * is returned.
      */
+// begin WITH_TAINT_TRACKING
+    //public static int abs(int i) {
+    //    return (i >= 0) ? i : -i;
+    //}
+    public static native int abs_intrinsic(int i);
+    
     public static int abs(int i) {
-        return (i >= 0) ? i : -i;
+        return abs_intrinsic(i);
     }
+// end WITH_TAINT_TRACKING
 
     /**
      * Returns the absolute value of the argument. If the argument is {@code
      * Long.MIN_VALUE}, {@code Long.MIN_VALUE} is returned.
      */
+// begin WITH_TAINT_TRACKING
+    //public static long abs(long l) {
+    //    return (l >= 0) ? l : -l;
+    //}
+    public static native long abs_intrinsic(long l);
+    
     public static long abs(long l) {
-        return (l >= 0) ? l : -l;
+        return abs_intrinsic(l);
     }
+// end WITH_TAINT_TRACKING
 
     /**
      * Returns the closest double approximation of the arc cosine of the
@@ -238,7 +266,14 @@ public final class Math {
      *            the angle whose cosine has to be computed, in radians.
      * @return the cosine of the argument.
      */
-    public static native double cos(double d);
+// begin WITH_TAINT_TRACKING
+    //public static native double cos(double d);
+    public static native double cos_intrinsic(double d);
+    
+    public static double cos(double d) {
+        return cos_intrinsic(d);
+    }
+// end WITH_TAINT_TRACKING
 
     /**
      * Returns the closest double approximation of the hyperbolic cosine of the
@@ -503,9 +538,16 @@ public final class Math {
      * Returns the most positive (closest to positive infinity) of the two
      * arguments.
      */
+// begin WITH_TAINT_TRACKING
+    //public static int max(int i1, int i2) {
+    //    return i1 > i2 ? i1 : i2;
+    //}
+    public static native int max_intrinsic(int i1, int i2);
+    
     public static int max(int i1, int i2) {
-        return i1 > i2 ? i1 : i2;
+        return max_intrinsic(i1, i2);
     }
+// end WITH_TAINT_TRACKING
 
     /**
      * Returns the most positive (closest to positive infinity) of the two
@@ -581,9 +623,16 @@ public final class Math {
      * Returns the most negative (closest to negative infinity) of the two
      * arguments.
      */
+// begin WITH_TAINT_TRACKING
+    //public static int min(int i1, int i2) {
+    //    return i1 < i2 ? i1 : i2;
+    //}
+    public static native int min_intrinsic(int i1, int i2);
+    
     public static int min(int i1, int i2) {
-        return i1 < i2 ? i1 : i2;
+        return min_intrinsic(i1, i2);
     }
+// end WITH_TAINT_TRACKING
 
     /**
      * Returns the most negative (closest to negative infinity) of the two
@@ -787,7 +836,14 @@ public final class Math {
      *            the angle whose sin has to be computed, in radians.
      * @return the sine of the argument.
      */
-    public static native double sin(double d);
+// begin WITH_TAINT_TRACKING
+    //public static native double sin(double d);
+    public static native double sin_intrinsic(double d);
+    
+    public static double sin(double d) {
+        return sin_intrinsic(d);
+    }
+// end WITH_TAINT_TRACKING
 
     /**
      * Returns the closest double approximation of the hyperbolic sine of the
@@ -822,7 +878,14 @@ public final class Math {
      * <li>{@code sqrt(NaN) = NaN}</li>
      * </ul>
      */
-    public static native double sqrt(double d);
+// begin WITH_TAINT_TRACKING
+    //public static native double sqrt(double d);
+    public static native double sqrt_intrinsic(double d);
+    
+    public static double sqrt(double d) {
+        return sqrt_intrinsic(d);
+    }
+// end WITH_TAINT_TRACKING
 
     /**
      * Returns the closest double approximation of the tangent of the argument.
