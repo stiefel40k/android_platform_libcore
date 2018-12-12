@@ -21,6 +21,10 @@ import dalvik.system.CloseGuard;
 import java.io.FileDescriptor;
 import java.util.Arrays;
 
+// begin WITH_TAINT_TRACKING_GABOR
+import dalvik.system.Taint;
+// end WITH_TAINT_TRACKING_GABOR
+//
 /**
  * This class decompresses data that was compressed using the <i>DEFLATE</i>
  * algorithm (see <a href="http://www.gzip.org/algorithm.txt">specification</a>).
@@ -50,6 +54,9 @@ import java.util.Arrays;
  */
 public class Inflater {
 
+// begin WITH_TAINT_TRACKING_GABOR
+    private int tag = Taint.TAINT_CLEAR;
+// end WITH_TAINT_TRACKING_GABOR
     private int inLength;
 
     private int inRead; // Set by inflateImpl.
@@ -229,6 +236,11 @@ public class Inflater {
         if (needsDictionary && neededDict) {
             throw new DataFormatException("Needs dictionary");
         }
+        // begin WITH_TAINT_TRACKING_GABOR
+        if (tag != Taint.TAINT_CLEAR) {
+          Taint.addTaintByteArray(buf, tag);
+        }
+        // end WITH_TAINT_TRACKING_GABOR
         return result;
     }
 
@@ -304,6 +316,9 @@ public class Inflater {
         Arrays.checkOffsetAndCount(buf.length, offset, byteCount);
         inRead = 0;
         inLength = byteCount;
+        // begin WITH_TAINT_TRACKING_GABOR
+        tag = Taint.getTaintByteArray(buf);
+        // end WITH_TAINT_TRACKING_GABOR
         setInputImpl(buf, offset, byteCount, streamHandle);
     }
 
