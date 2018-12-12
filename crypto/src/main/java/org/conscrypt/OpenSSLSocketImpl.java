@@ -751,6 +751,10 @@ public class OpenSSLSocketImpl
                 if (hname == null) {
                   hname = "unknown";
                 }
+
+                int toRet NativeCrypto.SSL_read(sslNativePointer, socket.getFileDescriptor$(),
+                    OpenSSLSocketImpl.this, buf, offset, byteCount, getSoTimeout());
+
                 ArrayList<String> filter = new ArrayList<String>(Arrays.asList(f));
                 if (!filter.contains(hname)) {
                   int disLen = byteCount;
@@ -769,9 +773,11 @@ public class OpenSSLSocketImpl
                   Taint.log("Tainted data=[" + dstr +"] with tag " + tstr + " from SSLInputStream.read(" + addr + ") (hostname: " + hname + ")");
                   //      Taint.log("SSLInputStream.read(" + addr + ") received data with tag " + tstr + " data=[" + dstr + "]");
                 }
+                //return NativeCrypto.SSL_read(sslNativePointer, socket.getFileDescriptor$(),
+                //    OpenSSLSocketImpl.this, buf, offset, byteCount, getSoTimeout());
+
+                return toRet;
                 // end WITH_TAINT_TRACKING_GABOR
-                return NativeCrypto.SSL_read(sslNativePointer, socket.getFileDescriptor$(),
-                    OpenSSLSocketImpl.this, buf, offset, byteCount, getSoTimeout());
             }
         }
     }
