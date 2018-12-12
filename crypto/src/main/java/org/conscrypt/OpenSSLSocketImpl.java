@@ -51,8 +51,8 @@ import libcore.io.Streams;
 import libcore.io.StructTimeval;
 // begin WITH_TAINT_TRACKING
 import dalvik.system.Taint;
-import java.io.StringWriter;
-import java.io.PrintWriter;
+//import java.io.StringWriter;
+//import java.io.PrintWriter;
 // end WITH_TAINT_TRACKING
 
 /**
@@ -740,15 +740,15 @@ public class OpenSSLSocketImpl
         @Override
         public int read(byte[] buf, int offset, int byteCount) throws IOException {
             BlockGuard.getThreadPolicy().onNetwork();
-            try {
-              throw new RuntimeException();
-            } catch (RuntimeException e) {
-              StringWriter sw = new StringWriter();
-              PrintWriter pw = new PrintWriter(sw);
-              e.printStackTrace(pw);
-              String sStackTrace = sw.toString();
-              Taint.log(sStackTrace);
-            }
+            //try {
+            //  throw new RuntimeException();
+            //} catch (RuntimeException e) {
+            //  StringWriter sw = new StringWriter();
+            //  PrintWriter pw = new PrintWriter(sw);
+            //  e.printStackTrace(pw);
+            //  String sStackTrace = sw.toString();
+            //  Taint.log(sStackTrace);
+            //}
             synchronized (readLock) {
                 checkOpen();
                 Arrays.checkOffsetAndCount(buf.length, offset, byteCount);
