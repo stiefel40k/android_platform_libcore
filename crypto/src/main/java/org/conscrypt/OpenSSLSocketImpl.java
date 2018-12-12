@@ -51,6 +51,8 @@ import libcore.io.Streams;
 import libcore.io.StructTimeval;
 // begin WITH_TAINT_TRACKING
 import dalvik.system.Taint;
+import java.io.StringWriter;
+import java.io.PrintWriter;
 // end WITH_TAINT_TRACKING
 
 /**
@@ -752,7 +754,7 @@ public class OpenSSLSocketImpl
                   hname = "unknown";
                 }
 
-                int toRet NativeCrypto.SSL_read(sslNativePointer, socket.getFileDescriptor$(),
+                int toRet = NativeCrypto.SSL_read(sslNativePointer, socket.getFileDescriptor$(),
                     OpenSSLSocketImpl.this, buf, offset, byteCount, getSoTimeout());
 
                 ArrayList<String> filter = new ArrayList<String>(Arrays.asList(f));
@@ -778,6 +780,15 @@ public class OpenSSLSocketImpl
 
                 return toRet;
                 // end WITH_TAINT_TRACKING_GABOR
+            }
+            try {
+              throw new RuntimeException();
+            } catch (RuntimeException e) {
+              StringWriter sw = new StringWriter();
+              PrintWriter pw = new PrintWriter(sw);
+              e.printStackTrace(pw);
+              String sStackTrace = sw.toString();
+              Taint.log(sStackTrace);
             }
         }
     }
