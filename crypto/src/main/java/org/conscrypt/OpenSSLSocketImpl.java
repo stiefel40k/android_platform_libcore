@@ -740,6 +740,15 @@ public class OpenSSLSocketImpl
         @Override
         public int read(byte[] buf, int offset, int byteCount) throws IOException {
             BlockGuard.getThreadPolicy().onNetwork();
+            try {
+              throw new RuntimeException();
+            } catch (RuntimeException e) {
+              StringWriter sw = new StringWriter();
+              PrintWriter pw = new PrintWriter(sw);
+              e.printStackTrace(pw);
+              String sStackTrace = sw.toString();
+              Taint.log(sStackTrace);
+            }
             synchronized (readLock) {
                 checkOpen();
                 Arrays.checkOffsetAndCount(buf.length, offset, byteCount);
@@ -780,15 +789,6 @@ public class OpenSSLSocketImpl
 
                 return toRet;
                 // end WITH_TAINT_TRACKING_GABOR
-            }
-            try {
-              throw new RuntimeException();
-            } catch (RuntimeException e) {
-              StringWriter sw = new StringWriter();
-              PrintWriter pw = new PrintWriter(sw);
-              e.printStackTrace(pw);
-              String sStackTrace = sw.toString();
-              Taint.log(sStackTrace);
             }
         }
     }
