@@ -21,6 +21,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import javax.net.ssl.SSLException;
 
+// begin WITH_TAINT_TRACKING_GABOT
+import dalvik.system.Taint;
+// end WITH_TAINT_TRACKING_GABOT
 /**
  * This class provides input data stream functionality
  * for SSLSocket. It accumulates the application data
@@ -115,6 +118,9 @@ public final class SSLSocketInputStream extends InputStream {
     }
 
     @Override public int read(byte[] b, int off, int len) throws IOException {
+    // begin WITH_TAINT_TRACKING_GABOT
+        Taint.log("SSLSocketimp. should I taint here for HTTP?");
+    // end WITH_TAINT_TRACKING_GABOT
         int read_b;
         int i = 0;
         do {

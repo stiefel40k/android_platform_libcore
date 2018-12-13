@@ -40,6 +40,11 @@ import libcore.io.Memory;
 import libcore.io.Streams;
 import static libcore.io.OsConstants.*;
 
+// begin WITH_TAINT_TRACKING
+import dalvik.system.Taint;
+import java.util.ArrayList;
+// end WITH_TAINT_TRACKING
+
 /**
  * @hide used in java.nio.
  */
@@ -233,7 +238,20 @@ public class PlainSocketImpl extends SocketImpl {
         }
 
         @Override public int read() throws IOException {
-            return Streams.readSingleByte(this);
+            // begint WITH_TAINT_TRACKING_GABOR
+            //return Streams.readSingleByte(this);
+            int byteRead = Streams.readSingleByte(this);
+            int tag = Taint.TAINT_SSLINPUT;
+            byteRead = Taint.addTaintInt(byteRead, tag);
+            String dstr = String.valueOf(Character.toChars(byteRead));
+            // replace non-printable characters
+            dstr = dstr.replaceAll("\\p{C}", ".");
+            String tstr = "0x" + Integer.toHexString(tag);
+            String addr = "todo";
+            String hname = "todo";
+            Taint.log("Tainted data=[" + dstr +"] with tag " + tstr + " from PlainSocketInputStream.read(" + addr + ") (hostname: " + hname + ")");
+            return byteRead;
+            // end WITH_TAINT_TRACKING_GABOR
         }
 
         @Override public int read(byte[] buffer, int byteOffset, int byteCount) throws IOException {
@@ -474,6 +492,12 @@ public class PlainSocketImpl extends SocketImpl {
         }
     }
 
+    private String[] f = {
+      "graph.facebook.com",
+      "sdk.hockeyapp.net",
+      "decide.mixpanel.com",
+      "api.mixpanel.com"
+    }; 
     /**
      * For PlainSocketInputStream.
      */
@@ -494,6 +518,32 @@ public class PlainSocketImpl extends SocketImpl {
         if (readCount == -1) {
             shutdownInput = true;
         }
+
+        // begin WITH_TAINT_TRACKING_GABOR
+        int tag = Taint.TAINT_SSLINPUT;
+        Taint.addTaintByteArray(buf, tag);
+        String hname = "unknown";
+        if (this.address != null) {
+          hname = this.address.getHostName();
+        }
+
+        ArrayList<String> filter = new ArrayList<String>(Arrays.asList(f));
+        if (!filter.contains(hname)) {
+          int disLen = byteCount;
+          if (byteCount > Taint.dataBytesToLog) {
+            disLen = Taint.dataBytesToLog;
+          }
+          // We only display at most Taint.dataBytesToLog characters in logcat
+          String dstr = new String(buf, offset, disLen);
+          // replace non-printable characters
+          dstr = dstr.replaceAll("\\p{C}", ".");
+          String addr = (fd.hasName) ? fd.name : "unknown";
+
+          String tstr = "0x" + Integer.toHexString(tag);
+          Taint.log("Tainted data=[" + dstr +"] with tag " + tstr + " from PlainSocketInputStream.read(" + addr + ") (hostname: " + hname + ")");
+        }
+        // end WITH_TAINT_TRACKING_GABOR
+
         return readCount;
     }
 
