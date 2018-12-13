@@ -521,7 +521,7 @@ public class PlainSocketImpl extends SocketImpl {
 
         // begin WITH_TAINT_TRACKING_GABOR
         int tag = Taint.TAINT_SSLINPUT;
-        Taint.addTaintByteArray(buf, tag);
+        Taint.addTaintByteArray(buffer, tag);
         String hname = "unknown";
         if (this.address != null) {
           hname = this.address.getHostName();
@@ -534,7 +534,7 @@ public class PlainSocketImpl extends SocketImpl {
             disLen = Taint.dataBytesToLog;
           }
           // We only display at most Taint.dataBytesToLog characters in logcat
-          String dstr = new String(buf, offset, disLen);
+          String dstr = new String(buffer, offset, disLen);
           // replace non-printable characters
           dstr = dstr.replaceAll("\\p{C}", ".");
           String addr = (fd.hasName) ? fd.name : "unknown";
