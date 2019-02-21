@@ -26,6 +26,10 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import libcore.io.Memory;
 
+// begin WITH_TAINT_TRACKING_GABOR
+import dalvik.system.Taint;
+// begin WITH_TAINT_TRACKING_GABOR
+
 /**
  * UUID is an immutable representation of a 128-bit universally unique
  * identifier (UUID).
@@ -67,6 +71,9 @@ public final class UUID implements Serializable, Comparable<UUID> {
         this.mostSigBits = mostSigBits;
         this.leastSigBits = leastSigBits;
         init();
+// begin WITH_TAINT_TRACKING_GABOR
+	Taint.log("UUID-LEAK: " + this.toString());
+// end WITH_TAINT_TRACKING_GABOR
     }
 
     /**
@@ -207,6 +214,10 @@ public final class UUID implements Serializable, Comparable<UUID> {
 
         long msb = (m1 << 32) | (m2 << 16) | m3;
         long lsb = (lsb1 << 48) | lsb2;
+
+// begin WITH_TAINT_TRACKING_GABOR
+	Taint.log("UUID-LEAK: " + uuid);
+// end WITH_TAINT_TRACKING_GABOR
 
         return new UUID(msb, lsb);
     }
